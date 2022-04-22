@@ -1,0 +1,151 @@
+<!-- Template page: offers three sections to visualize a 3 steps workflow.-->
+
+{% extends "masterPage.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-1">
+
+    </div>
+        <div class="col-4">
+            <div class="section">
+                <div class="panel panel--loose panel--raised base-margin-bottom" style="padding: 50px;">
+                    <h2 class="subtitle">Step 1: Choose Filter</h2><hr>
+
+                    <!-- Filter form -->
+                    <form action="/" method="post">
+                    
+                        <div class="row">
+                            <div class="col-6">
+                                <h6 style="margin-top: 20px;font-weight: bold;">Source</h6><hr>
+                                <!-- Source label -->
+                                <div class="form-group base-margin-bottom">
+                                    <div class="form-group__text">
+                                        <label for="source-label">Source Label</label>
+                                        <select onchange="setSourceIp();" id= "source-label" name="source-label" value="{{filter.sourcelabel}}">
+                                            <option value="" selected>Any source</option>
+                                            {% for i in label_list %}
+                                          <option value="{{ i.name }}" {% if filter.sourcelabel == i.name %} selected {% endif %}>{{ i.name }}</option>
+                                          {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Source IP -->
+                                <div class="form-group base-margin-bottom">
+                                    <div class="form-group__text">
+                                        <input id="source-ip" name="source-ip" type="text" value="{{filter.sourceip}}">
+                                        <label for="source-ip">Source IP Addresses</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <h6 style="margin-top: 20px;font-weight: bold;">Destination</h6><hr>
+                                <!-- Destination label -->
+                                <div class="form-group base-margin-bottom">
+                                    <div class="form-group__text">
+                                        <label for="dest-label">Destination Label</label>
+                                        <select onchange="setDestIp();" id="dest-label" name="dest-label" value="{{filter.destlabel}}">
+                                            <option value="" selected>Any destination</option>
+                                            {% for i in label_list %}
+                                          <option value="{{ i.name }}" {% if filter.destlabel == i.name %} selected {% endif %}>{{ i.name }}</option>
+                                          {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Destination IP -->
+                                <div class="form-group base-margin-bottom">
+                                    <div class="form-group__text">
+                                        <input id="dest-ip" name="dest-ip" type="text" value="{{filter.destip}}">
+                                        <label for="dest-ip">Destination IP Addresses</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 style="margin-top: 30px;font-weight: bold;">Flow Properties</h6><hr>
+                        <!-- Tags -->
+                        <div class="form-group base-margin-bottom">
+                            <div class="form-group__text">
+                                <input id="tags" name="tags" type="text" value="{{filter.tags}}">
+                                <label for="tags">Tags (separated by commas)</label>
+                            </div>
+                        </div>
+
+                        <!-- Protocols -->
+                        <div class="form-group base-margin-bottom">
+                            <div class="form-group__text">
+                                <input id="protocols" name="protocols" type="text" value="{{filter.protocols}}">
+                                <label for="protocols">Protocols (separated by commas)</label>
+                            </div>
+                        </div>
+
+                        <!-- Since date/time -->
+                        <div class="form-group base-margin-bottom">
+                            <div class="form-group__text">
+                                <input id="date" name="date" type="date" value="{{filter.fromdate}}">
+                                <label for="date">Show Traffic Since:</label>
+                            </div>
+                        </div>
+
+                        <!-- Marked date -->
+                        <div class="form-group base-margin-bottom">
+                            <div class="form-group form-group--inline">
+                                <div class="form-group__text">
+                                    <input style="width: 70px;" id="date" name="deadline" type="number" value="{{deadline}}">
+                                <label for="date">Mark Traffic Not Seen Since&nbsp</label>
+                                </div>
+                            </div>
+                            &nbspDays Ago
+                        </div>
+
+                        <div style="height: 50px;">
+                            <button id="submit-filter" onclick="showLoadingText();" style="margin-top: 20px; float: right;color: white;font-size: large;" class="btn btn--primary" type="submit">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="section">
+                <div class="panel panel--loose panel--raised base-margin-bottom" style="padding: 50px;">
+                    <h2 class="subtitle">Step 2: Consult Flows</h2>
+                    <hr>
+                    <div class="responsive-table">
+                        <table class="table table--lined table">
+                            <thead>
+                                <tr>
+                                    <th>Source</th>
+                                    <th>Destination</th>
+                                    <th>Protocol</th>
+                                    <th>Tags</th>
+                                    <th>Last Seen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if flows|length > 0 %}
+                                    {% for f in flows %}
+                                    <tr {% if f.dayssince >= deadline and f.dayssince > 0 %} style="background-color:#FFB7B7" {% endif %}>
+                                        <td>{{f.source}}</td>
+                                        <td>{{f.dest}}</td>
+                                        <td>{{f.protocol}}</td>
+                                        <td>{{f.tags}}</td>
+                                        <td>{% if f.dayssince > 0 %} {{f.dayssince}} days ago {% else %} Today {% endif %}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table> 
+                    
+                    <div style="height: 50px;">
+                        <a style="float: left;margin-top: 20px;font-size: large;color: white;" href="/csv" class="btn btn--success">Export to CSV</a>
+                        <a href="/flows?page={{ nextpage }}&deadline={{ deadline }}" style="margin-top: 20px; float: right;color: white;font-size: large;" class="btn btn--primary" type="submit">Next ({{nextpage}} of {{ total }})</a>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+</div>
+{%  endblock %}
